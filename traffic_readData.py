@@ -11,6 +11,7 @@
 """
 # imports
 import xlrd
+from datetime import datetime,timedelta
 
 # read data & preprocess
 fileDir = r'data.xls'
@@ -63,13 +64,18 @@ groupId = {'NHNX39(1)      ':NHNX39_1,'NHNX39(2)      ':NHNX39_2,
 def readLine(dataLine):
     # obtain the ID and traffic infomation of current line of data
     currentId = dataLine[1].value
+    # the raw data which stores date information  
+    rawDate = dataLine[2].value
+    # processed date information in 'datetime' format
+    date = xlrd.xldate.xldate_as_datetime(rawDate,1)-timedelta(days = 1)
+    
     trafficInfo = {'volume':dataLine[3].value,'speed':dataLine[4].value,
-                   'occupy':dataLine[5].value}
+                   'occupy':dataLine[5].value,'date': date}
     
     # quote the corresponding array directly according to the detector id
     groupId.get(currentId).append(trafficInfo)
     
-    '''
+'''
 @brief   : To read a sheet of data and store each line to a proper array
 @variable: a sheet of data, for example: allSheets.sheets()[0]
 @return  : None
@@ -77,12 +83,62 @@ def readLine(dataLine):
            sheets and it quote 'readLine()' inside
 '''
 def readSheet(thisSheet):
-    # Giving that 'thisSheet' is not Iterable, first extract the data 
-    # in an array 'values' and restore it
+    # Here 'values' is a generator of all the datas in thisSheet
     values = thisSheet.get_rows()
     # exclude the first row
     next(values)
     
     list(map(readLine,values))
     
+'''
+@brief   : To separate the date read by each detector in the order of date
+@variable: the whole series of data read by a single dector, e.g.'NHNX39_1'
+@return  : None
+@others  : 
+'''
+def detectorTiming(detectorValues):
+    data_18,data_19,data_20,data_21,data_22,data_23,data_24 = [],[],[],[],[],[],[]
+    # the same principle as 'groupId', however, this dict is used to separate the 
+    # traffic data by date
+    dateId = {'18':data_18,'19':data_19,'20':data_20,'21':data_21,
+              '22':data_22,'23':data_23,'24':data_24}
+    
+    # 'lineOfData' is a 'trafficInfo' struture, which is define above
+    processLine = lambda lineOfData:dateId.get(str(lineOfData['date'].day)).append(lineOfData)
+    
+    list(map(processLine,detectorValues))
+    return [data_18,data_19,data_20,data_21,data_22,data_23,data_24]
+
+'''
+@brief   : To remove the duplicate datas
+@variable: the whole series of data read by a single dector, e.g.'NHNX39_1'
+@return  : None
+@others  : 
+
+def removeRedundancy(lineOfData):
+'''
+    
 list(map(readSheet,allSheets))
+
+# sort all the datas stored in those user-defined lists in the order of time
+for detectors in groupId.values():
+    detectors.sort(key = lambda lineOfData:lineOfData['date'].timestamp())
+
+
+# distribute the datas into an array of each day, that is to say, now e.g. NHNX39_1 is an list
+# of seven lists of the trafficInfo on one single day
+NHNX39_1    = detectorTiming(NHNX39_1)
+NHNX39_2    = detectorTiming(NHNX39_2) 
+NHNX40_1    = detectorTiming(NHNX40_1)
+NHNX40_2    = detectorTiming(NHNX40_2)
+NHNX41_1    = detectorTiming(NHNX41_1)
+NHNX41_2    = detectorTiming(NHNX41_2)
+NHWN_NI_1_1 = detectorTiming(NHWN_NI_1_1)
+NHWN_NI_1_2 = detectorTiming(NHWN_NI_1_2)
+NHWN_NI_2_1 = detectorTiming(NHWN_NI_2_1)
+NHWN_NI_2_2 = detectorTiming(NHWN_NI_2_2)    
+NHZP_NO_1_1 = detectorTiming(NHZP_NO_1_1)   
+NHZP_NO_1_2 = detectorTiming(NHZP_NO_1_2)
+NHZP_NO_2_1 = detectorTiming(NHZP_NO_2_1)
+NHZP_NO_2_2 = detectorTiming(NHZP_NO_2_2)
+
