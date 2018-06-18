@@ -1,0 +1,70 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 11 08:59:34 2018
+
+@author: wyw
+"""
+
+'''
+input:previous two days of flow observations(e.g. 18th and 19th April)
+output:the next day flow values(20th April)
+Step1:the time from 7am to 11am was divided into each 5min intervals.
+      Ft was calculated using the flow data collected on 18th April.
+      Ft=X(t+1)/X(t)
+Step2:the apriori estimate of the predicted flow at time(t+1) = Ft * the aposteriori estimate of the predicted flow at time(t)
+      the first time interval = the observed flow 
+Step3:calculate P-
+Step4:calculate K
+
+'''
+
+# select valid data of one detector which covers nearly 26mins
+inputdata=NHNX39_1
+# e.g. NHNX39_1 is an list of seven lists of the trafficInfo on one single day
+# i means the date(0-6) , j means the time(0-4319)
+data_day18=[]
+data_day19=[]
+data_day20=[]
+for j in range(1550,1629):
+    a=inputdata[0][j]['volume']
+    data_day18.append(a)
+for j in range(1550,1629):
+    a=inputdata[1][j]['volume']
+    data_day19.append(a)
+for j in range(1550,1629):
+    a=inputdata[2][j]['volume']
+    data_day20.append(a)
+
+# modeling
+Q = 1e-6
+R = 1e-1
+import matplotlib.pyplot as plt
+#flow1: 18th April flow observations
+#flow2: 19th April flow observations
+def KFT(flow1,flow2):
+    # calculate F
+    Ft=[]
+    optimumflow=[]
+    optimumflow.append(flow1[0])
+    optimumCovar=10 # reference to an example
+    for i in range(len(flow1)-1):
+        F=flow1[i+1]/(flow1[i])
+        Ft.append(F)
+        #Kalman Filtering Technique
+    for j in range(len(flow1)-1):
+        currflow=flow2[j]
+        estflow=Ft[j]*optimumflow[j]
+        estCovar =Ft[j]*optimumCovar*Ft[j] + Q
+        Kg = estCovar/(estCovar+R)
+        optimumflow.append(estflow+Kg*(currflow-estflow))
+        optimumCovar = (1-Kg)*estCovar
+    return optimumflow
+
+plt.figure()
+optimumflow = KFT(data_day18,data_day19)
+plt.plot(range(len(optimumflow)),optimumflow)
+plt.title('KFT')
+
+plt.figure()
+plt.plot(range(len(data_day20)),data_day20)
+plt.title('data_day20')
