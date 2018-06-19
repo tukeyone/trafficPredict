@@ -18,23 +18,6 @@ Step4:calculate K
 
 '''
 
-# select valid data of one detector which covers nearly 26mins
-inputdata=NHNX39_1
-# e.g. NHNX39_1 is an list of seven lists of the trafficInfo on one single day
-# i means the date(0-6) , j means the time(0-4319)
-data_day18=[]
-data_day19=[]
-data_day20=[]
-for j in range(1550,1629):
-    a=inputdata[0][j]['volume']
-    data_day18.append(a)
-for j in range(1550,1629):
-    a=inputdata[1][j]['volume']
-    data_day19.append(a)
-for j in range(1550,1629):
-    a=inputdata[2][j]['volume']
-    data_day20.append(a)
-
 # modeling
 Q = 1e-6
 R = 1e-1
@@ -43,16 +26,18 @@ import matplotlib.pyplot as plt
 #flow2: 19th April flow observations
 def KFT(flow1,flow2):
     # calculate F
+    peakflow1=flow1[7*12:11*12+1] # 7am-11am,there is 12 lines of data in one hour
+    peakflow2=flow2[7*12:11*12+1]
     Ft=[]
     optimumflow=[]
-    optimumflow.append(flow1[0])
+    optimumflow.append(peakflow1[0])
     optimumCovar=10 # reference to an example
-    for i in range(len(flow1)-1):
-        F=flow1[i+1]/(flow1[i])
+    for i in range(len(peakflow1)-1):
+        F=peakflow1[i+1]/(peakflow1[i])
         Ft.append(F)
         #Kalman Filtering Technique
-    for j in range(len(flow1)-1):
-        currflow=flow2[j]
+    for j in range(len(peakflow1)-1):
+        currflow=peakflow2[j]
         estflow=Ft[j]*optimumflow[j]
         estCovar =Ft[j]*optimumCovar*Ft[j] + Q
         Kg = estCovar/(estCovar+R)
@@ -61,10 +46,16 @@ def KFT(flow1,flow2):
     return optimumflow
 
 plt.figure()
-optimumflow = KFT(data_day18,data_day19)
+optimumflow = KFT(aggrdata_day18,aggrdata_day19)
 plt.plot(range(len(optimumflow)),optimumflow)
-plt.title('KFT')
+plt.title('Predicted Value based on KFT')
+plt.xlabel("/5min")  
+plt.ylabel("Volume") 
 
+
+peakflow3=aggrdata_day20[7*12:11*12+1]
 plt.figure()
-plt.plot(range(len(data_day20)),data_day20)
-plt.title('data_day20')
+plt.plot(range(len(peakflow3)),peakflow3)
+plt.title('Original Value')
+plt.xlabel("/5min")  
+plt.ylabel("Volume")
