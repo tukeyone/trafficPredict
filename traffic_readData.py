@@ -198,6 +198,48 @@ def linearInterp(detectorValues):
         
         # insert constrcuted trafficInfo
         detectorValues.insert(index+1,trafficInfo)
+        
+'''
+@brief   : To fix the datas read as 0, by taking the average value of the preceding and following data
+@variable: a single dimension of data read by a single dector, e.g.'NHNX39_1[:]['volume']', _ordered_
+@return  : None
+@others  : this function should be called on the basis of sorting as well as linear interpolation
+'''
+def fixzero(oneTrafficInfo):
+    return    [(oneTrafficInfo[index-1]+oneTrafficInfo[index+1])/2 
+              if oneTrafficInfo[index]==0 and index > 1260 and index < 3420
+              else oneTrafficInfo[index]
+              for index in range(len(oneTrafficInfo)) ]
+    
+''' 
+@brief   : To fix the datas read as 0, by taking the average value of the preceding and following data
+@variable: the whole series of data read by a single dector on a single day, e.g.'NHNX39_1[0]', _ordered_
+@return  : None
+@others  : this function should be called on the basis of sorting as well as linear interpolation
+           it calls fixzero() inside
+'''
+def fixZero(detectorValues):
+    # obtain one-dimensional traffic infomation
+    occupy = [lineOfData['occupy'] for lineOfData in detectorValues]
+    speed  = [lineOfData['speed'] for lineOfData in detectorValues]
+    volume = [lineOfData['volume'] for lineOfData in detectorValues]
+    #date   = [lineOfData['date'] for lineOfData in detectorValues]
+    
+    # fix zero data on rush hours from 7:00 to 19:00
+    occupy = fixzero(occupy)
+    speed  = fixzero(speed)
+    volume = fixzero(volume)
+    
+    # reconstruct data structure
+    detectorDict = {}
+    detectorDict['volume'] = volume
+    detectorDict['speed']  = speed
+    detectorDict['occupy'] = occupy
+    #detectorDict['date']   = date
+    
+    return detectorDict
+
+'''main program starts eventually.......'''
 
 list(map(readSheet,allSheets))
 # remove those useless datas
@@ -222,18 +264,26 @@ list(map(linearInterp,groupId.values()))
 # distribute the datas into an array of each day, that is to say, now e.g. NHNX39_1 is an list
 # of seven lists of the trafficInfo on one single day
 
-NHNX39_1    = detectorTiming(NHNX39_1)
-NHNX39_2    = detectorTiming(NHNX39_2) 
-NHNX40_1    = detectorTiming(NHNX40_1)
-NHNX40_2    = detectorTiming(NHNX40_2)
-NHNX41_1    = detectorTiming(NHNX41_1)
-NHNX41_2    = detectorTiming(NHNX41_2)()
-NHWN_NI_1_1 = detectorTiming(NHWN_NI_1_1)
-NHWN_NI_1_2 = detectorTiming(NHWN_NI_1_2)
-NHWN_NI_2_1 = detectorTiming(NHWN_NI_2_1)
-NHWN_NI_2_2 = detectorTiming(NHWN_NI_2_2)    
-NHZP_NO_1_1 = detectorTiming(NHZP_NO_1_1)   
-NHZP_NO_1_2 = detectorTiming(NHZP_NO_1_2)
-NHZP_NO_2_1 = detectorTiming(NHZP_NO_2_1)
-NHZP_NO_2_2 = detectorTiming(NHZP_NO_2_2)
 
+NHNX39_1    = list(map(fixZero,detectorTiming(NHNX39_1)))
+NHNX39_2    = list(map(fixZero,detectorTiming(NHNX39_2)))
+NHNX40_1    = list(map(fixZero,detectorTiming(NHNX40_1)))
+NHNX40_2    = list(map(fixZero,detectorTiming(NHNX40_2)))
+NHNX41_1    = list(map(fixZero,detectorTiming(NHNX41_1)))
+NHNX41_2    = list(map(fixZero,detectorTiming(NHNX41_2)))
+NHWN_NI_1_1 = list(map(fixZero,detectorTiming(NHWN_NI_1_1)))
+NHWN_NI_1_2 = list(map(fixZero,detectorTiming(NHWN_NI_1_2)))
+NHWN_NI_2_1 = list(map(fixZero,detectorTiming(NHWN_NI_2_1)))
+NHWN_NI_2_2 = list(map(fixZero,detectorTiming(NHWN_NI_2_2)))    
+NHZP_NO_1_1 = list(map(fixZero,detectorTiming(NHZP_NO_1_1)))   
+NHZP_NO_1_2 = list(map(fixZero,detectorTiming(NHZP_NO_1_2)))
+NHZP_NO_2_1 = list(map(fixZero,detectorTiming(NHZP_NO_2_1)))
+NHZP_NO_2_2 = list(map(fixZero,detectorTiming(NHZP_NO_2_2)))
+
+'''
+import matplotlib.pyplot as plt
+import numpy as np
+time = np.arange(len(NHNX39_1[0]))/3 # minute
+occupy = [lineOfData['occupy'] for lineOfData in NHNX39_1[0]]
+plt.plot(time,occupy)
+'''
