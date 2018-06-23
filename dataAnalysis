@@ -1,1 +1,130 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun 23 17:01:26 2018
 
+@author: yufei
+"""
+import matplotlib.pyplot as plt
+from pylab import *
+import numpy as np
+volume=NHNX39_1[0]['volume']
+speed=NHNX39_1[0]['speed']
+occupy=NHNX39_1[0]['occupy']
+'''
+@brief   : get the average of inputdata 
+@variable: a list of data(volume) taking 20s as a period
+@return  : a list of data(volume) taking 1min as a period or 5min as a period
+@others  : This function is to be called in map() in order to process a bunch
+            of datas
+'''
+def oneminaveragedata(data):
+    oneminavdata=[]
+    for n in range(0,4320,3):
+        temp0=data[n]
+        temp1=data[n+1]
+        temp2=data[n+2]
+        oneminavdata.append((temp0+temp1+temp2)/3)
+    return oneminavdata
+def fiveminaveragedata(data):
+    fiveminavdata=[]
+    for n in range(0,4230,15):
+        temp0=data[n]
+        temp1=data[n+1]
+        temp2=data[n+2]
+        temp3=data[n+3]
+        temp4=data[n+4]
+        temp5=data[n+5]
+        temp6=data[n+6]
+        temp7=data[n+7]
+        temp8=data[n+8]
+        temp9=data[n+9]
+        temp10=data[n+10]
+        temp11=data[n+11]
+        temp12=data[n+12]
+        temp13=data[n+13]
+        temp14=data[n+14]
+        av=(temp0+temp1+temp2+temp3+temp4+temp5+temp6+temp7+temp8+temp9+temp10+temp11+temp12+temp13+temp14)
+        fiveminavdata.append(av)
+    return fiveminavdata
+
+
+oneminvolume=oneminaveragedata(volume)
+fiveminvolume=fiveminaveragedata(volume)
+oneminspeed=oneminaveragedata(speed)
+fiveminspeed=fiveminaveragedata(speed)
+oneminoccupy=oneminaveragedata(occupy)
+fiveminoccupy=fiveminaveragedata(occupy)
+'''
+@brief   : draw image about volume-speed,speed-occupy and occupy-volume
+@variable: two lists of data(volume) taking 1min as a period or 5min as a period
+@return  : a scatter image about two lists of data
+@others  : none
+'''
+scatter(fiveminvolume,fiveminspeed)
+show()
+scatter(fiveminspeed,fiveminoccupy)
+show()
+scatter(fiveminoccupy,fiveminvolume)
+show()
+'''
+@brief   : predict coefficients of polynomial 
+@variable: two lists of data
+@return  : a list of coefficitnes---[a0,a1,a2], a0 is the Constant item, a1 is the Primary item
+and a2 is the Quadratic item.
+@others  : none
+'''
+from scipy.stats import f
+class OLR:
+    def __init__(self,X,Y):
+        self.X=X
+        self.Y=Y
+    def modelling(self):
+        xt=self.X.T
+        xtx=xt.dot(self.X)
+        inv = np.linalg.inv(xtx)
+        self.a=inv.dot(xt).dot(self.Y) 
+    def predict(self,x):
+        pre = x.dot(self.a)
+        return pre
+    def fTest(self,arfa):
+        yhat=self.X.dot(self.a)
+        Qe=np.sum((self.Y-yhat)**2)
+        yAver =np.average(self.Y)
+        u=np.sum((yhat-yAver)**2)
+        n=len(self.Y)
+        F=u/(Qe/(n))
+        Farfa= f.isf(arfa, 1, n-2)
+        return (F,Farfa,F>Farfa)
+#   predict coefficients of polynomial of volume-speed
+x1=fiveminvolume
+x2=np.power(x1,2)
+x=np.c_[x1,x2]
+y=fiveminspeed
+jg=np.ones(len(x))
+x=np.c_[jg,x]
+olr = OLR(x,y)
+olr.modelling()
+vs=olr.a
+print(vs)
+#   predict coefficients of polynomial of speed-occupy
+x1=fiveminspeed
+x2=np.power(x1,2)
+x=np.c_[x1,x2]
+y=fiveminoccupy
+jg=np.ones(len(x))
+x=np.c_[jg,x]
+olr = OLR(x,y)
+olr.modelling()
+so=olr.a
+print(so)
+#   predict coefficients of polynomial of occupy-volume
+x1=fiveminoccupy
+x2=np.power(x1,2)
+x=np.c_[x1,x2]
+y=fiveminvolume
+jg=np.ones(len(x))
+x=np.c_[jg,x]
+olr = OLR(x,y)
+olr.modelling()
+ov=olr.a
+print(ov)
