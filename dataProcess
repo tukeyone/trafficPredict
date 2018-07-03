@@ -9,25 +9,48 @@ Created on Tue Jun 19 11:02:56 2018
 inputdata=NHNX39_1
 # e.g. NHNX39_1 is an list of seven lists of the trafficInfo on one single day
 # i means the date(0-6) , j means the time(0-4319)
-data_day18=[]
-data_day19=[]
-data_day20=[]
-for j in range(4320):
-    a=inputdata[0][j]['volume']
-    data_day18.append(a)
-for j in range(4320):
-    a=inputdata[1][j]['volume']
-    data_day19.append(a)
-for j in range(4320):
-    a=inputdata[2][j]['volume']
-    data_day20.append(a)
+data_day18=inputdata[0]['volume']
+data_day19=inputdata[1]['volume']
+data_day20=inputdata[2]['volume']
+data_day21=inputdata[3]['volume']
+data_day22=inputdata[4]['volume']
+data_day23=inputdata[5]['volume']
+data_day24=inputdata[6]['volume']
+
+
+'''
+@brief   : data smoothing 
+@variable: a list of data(volume) taking 20s as a period
+@return  : a list of data(volume) 
+@others  : This function is to give a general idea of relatively slow changes of value
+'''
+def smooth(data,window):
+    m=window
+    y=[]
+    for i in range(len(data)):
+        if i>=((m+1)//2) and i<=(len(data)-((m+1)//2-1)):
+            sum1=0
+            for k in range((i-(m-1)//2),(i+(m-1)//2)):
+                sum1=sum1+data[k]
+            y.append(sum1/m)
+        else:
+            y.append(data[i])
+    return y
+
+sdata_day18=smooth(data_day18,7)
+sdata_day19=smooth(data_day19,7)
+sdata_day20=smooth(data_day20,7)
+sdata_day21=smooth(data_day21,7)
+sdata_day22=smooth(data_day22,7)
+sdata_day23=smooth(data_day23,7)
+sdata_day24=smooth(data_day24,7)
     
 '''
 @brief   : data aggregation 
 @variable: a list of data(volume) taking 20s as a period
-@return  : a list of data(volume) taking 1min as a period
-@others  : This function is to be called in map() in order to process a bunch
-            of datas
+@return  : a list of data(volume) taking 5min as a period
+@others  : The function is to aggregate data to eliminate the short period 
+           traffic flow fluctuation which is helpful to predict
 '''
 def aggronemin(data):
     aggrdata=[]
@@ -48,6 +71,10 @@ def aggrfivemin(oridata):
         temp4=data[n+4]
         aggrdata.append((temp0+temp1+temp2+temp3+temp4)/5)
     return aggrdata
-aggrdata_day18=aggrfivemin(data_day18)
-aggrdata_day19=aggrfivemin(data_day19)
-aggrdata_day20=aggrfivemin(data_day20)
+aggrdata_day18=aggrfivemin(sdata_day18)
+aggrdata_day19=aggrfivemin(sdata_day19)
+aggrdata_day20=aggrfivemin(sdata_day20)
+aggrdata_day21=aggrfivemin(sdata_day21)
+aggrdata_day22=aggrfivemin(sdata_day22)
+aggrdata_day23=aggrfivemin(sdata_day23)
+aggrdata_day24=aggrfivemin(sdata_day24)
