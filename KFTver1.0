@@ -1,0 +1,99 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 11 08:59:34 2018
+
+@author: wyw
+"""
+
+'''
+input: previous two days of flow observations(e.g. 18th and 19th April)
+output:the next day flow values(20th April)
+Step1: the time from 7am to 11am was divided into each 5min intervals.
+       Ft was calculated using the flow data collected on 18th April.
+       Ft=X(t+1)/X(t)
+Step2: the apriori estimate of the predicted flow at time(t+1) = Ft * the aposteriori estimate of the predicted flow at time(t)
+       the first time interval = the observed flow 
+Step3: calculate P-
+Step4: calculate K
+
+'''
+
+# modeling
+Q = 1e-6
+R = 1e-1
+import matplotlib.pyplot as plt
+import math
+#flow1: 18th April flow observations
+#flow2: 19th April flow observations
+def KFT(flow1,flow2):
+    # calculate F
+    peakflow1=flow1[7*12:11*12+1] # 7am-11am,there is 12 lines of data in one hour
+    peakflow2=flow2[7*12:11*12+1]
+    Ft=[]
+    optimumflow=[]
+    optimumflow.append(peakflow1[0])
+    optimumCovar=10 # reference to an example
+    for i in range(len(peakflow1)-1):
+        F=peakflow1[i+1]/(peakflow1[i])
+        Ft.append(F)
+        #Kalman Filtering Technique
+    for j in range(len(peakflow1)-1):
+        currflow=peakflow2[j]
+        estflow=Ft[j]*optimumflow[j]
+        estCovar =Ft[j]*optimumCovar*Ft[j] + Q
+        Kg = estCovar/(estCovar+R)
+        optimumflow.append(estflow+Kg*(currflow-estflow))
+        optimumCovar = (1-Kg)*estCovar
+    MAPE= sum((optimumflow[i]-peakflow3[i])/peakflow3[i] for i in range(len(optimumflow)))/len(optimumflow)
+    print(MAPE)
+    return optimumflow
+
+plt.figure()
+peakflow3=aggrdata_day20[7*12:11*12+1]
+optimumflow = KFT(aggrdata_day18,aggrdata_day19)
+plt.plot(range(len(optimumflow)),optimumflow,'r',label='Predicted Value')
+plt.plot(range(len(peakflow3)),peakflow3,'b',label='Original Value')
+plt.legend(loc='upper left')
+plt.title('Prediction of day 20 based on KFT')
+plt.xlabel("/5min")  # 横轴标识
+plt.ylabel("Volume") # 纵轴标识
+
+plt.figure()
+peakflow3=aggrdata_day21[7*12:11*12+1]
+optimumflow = KFT(aggrdata_day19,aggrdata_day20)
+plt.plot(range(len(optimumflow)),optimumflow,'r',label='Predicted Value')
+plt.plot(range(len(peakflow3)),peakflow3,'b',label='Original Value')
+plt.legend(loc='upper left')
+plt.title('Prediction of day 21 based on KFT')
+plt.xlabel("/5min")  # 横轴标识
+plt.ylabel("Volume") # 纵轴标识
+
+plt.figure()
+peakflow3=aggrdata_day22[7*12:11*12+1]
+optimumflow = KFT(aggrdata_day20,aggrdata_day21)
+plt.plot(range(len(optimumflow)),optimumflow,'r',label='Predicted Value')
+plt.plot(range(len(peakflow3)),peakflow3,'b',label='Original Value')
+plt.legend(loc='upper left')
+plt.title('Prediction of day 22 based on KFT')
+plt.xlabel("/5min")  # 横轴标识
+plt.ylabel("Volume") # 纵轴标识
+
+plt.figure()
+peakflow3=aggrdata_day23[7*12:11*12+1]
+optimumflow = KFT(aggrdata_day21,aggrdata_day22)
+plt.plot(range(len(optimumflow)),optimumflow,'r',label='Predicted Value')
+plt.plot(range(len(peakflow3)),peakflow3,'b',label='Original Value')
+plt.legend(loc='upper left')
+plt.title('Prediction of day 23 based on KFT')
+plt.xlabel("/5min")  # 横轴标识
+plt.ylabel("Volume") # 纵轴标识
+
+plt.figure()
+peakflow3=aggrdata_day24[7*12:11*12+1]
+optimumflow = KFT(aggrdata_day22,aggrdata_day23)
+plt.plot(range(len(optimumflow)),optimumflow,'r',label='Predicted Value')
+plt.plot(range(len(peakflow3)),peakflow3,'b',label='Original Value')
+plt.legend(loc='upper left')
+plt.title('Prediction of day 24 based on KFT')
+plt.xlabel("/5min")  # 横轴标识
+plt.ylabel("Volume") # 纵轴标识
