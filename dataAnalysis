@@ -2,7 +2,7 @@
 """
 Created on Sat Jun 23 17:01:26 2018
 
-@author: yufei
+@author: Han Yufei
 """
 import matplotlib.pyplot as plt
 from pylab import *
@@ -43,7 +43,7 @@ def fiveminaveragedata(data):
         temp12=data[n+12]
         temp13=data[n+13]
         temp14=data[n+14]
-        av=(temp0+temp1+temp2+temp3+temp4+temp5+temp6+temp7+temp8+temp9+temp10+temp11+temp12+temp13+temp14)
+        av=(temp0+temp1+temp2+temp3+temp4+temp5+temp6+temp7+temp8+temp9+temp10+temp11+temp12+temp13+temp14)/15
         fiveminavdata.append(av)
     return fiveminavdata
 
@@ -59,20 +59,25 @@ fiveminoccupy=fiveminaveragedata(occupy)
 @variable: two lists of data(volume) taking 1min as a period or 5min as a period
 @return  : a scatter image about two lists of data
 @others  : none
+
 '''
+
 scatter(fiveminvolume,fiveminspeed)
 show()
 scatter(fiveminspeed,fiveminoccupy)
 show()
 scatter(fiveminoccupy,fiveminvolume)
 show()
+
 '''
+
 @brief   : predict coefficients of polynomial 
 @variable: two lists of data
 @return  : a list of coefficitnes---[a0,a1,a2], a0 is the Constant item, a1 is the Primary item
 and a2 is the Quadratic item.
 @others  : none
 '''
+
 from scipy.stats import f
 class OLR:
     def __init__(self,X,Y):
@@ -128,3 +133,60 @@ olr = OLR(x,y)
 olr.modelling()
 ov=olr.a
 print(ov)
+
+'''
+@brief   : determine the degree of congestion 
+@variable: occupy as x label, volume as y label
+@return  : 4 stage which are divided by Mcmaster algoritm
+@others  : none
+'''
+
+
+occupymax=max(occupy)
+volumemax=max(volume)
+
+i=np.arange(0,28,0.1)
+j=0.428*i
+
+p=np.arange(28,occupymax,0.1)
+q=np.array([12.0])
+for t in arange(1,len(p)):
+    q=np.row_stack((q,[12.0]))
+    
+y=np.arange(0,volumemax,0.1)
+x=np.array([28.0])
+for t in arange(1,len(y)):
+    x=np.row_stack((x,[28.0]))
+
+scatter(x,y)
+scatter(i,j)
+scatter(p,q)
+scatter(fiveminoccupy,fiveminvolume)
+show()
+
+'''
+@brief   : find the peak time
+@variable: fiveminoccupy, fiveminvolume, time 
+@return  : time presented by XX.XX hour such as 14.5 hour
+@others  : none
+'''
+
+det=np.c_[fiveminoccupy,fiveminvolume]
+time=[0]
+for n in range(15,4230,15):
+    time=np.row_stack((time,[n/3]))
+det=np.c_[det,time]
+flag=[0]
+for n in range(15,4230,15):
+    flag=np.row_stack((flag,[0]))
+det=np.c_[det,flag]
+
+high=array([0])
+for te in arange(1,len(fiveminoccupy)):
+    if det[te,0]>28.0 and det[te,1]<12.0:
+        det[te,3]=1.0
+        high=np.row_stack((high,[te/12.0]))
+high=high[1:,:]
+
+print(high)
+
